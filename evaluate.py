@@ -106,9 +106,7 @@ def evaluate_open_set(model, loader, device, class_centers, weibull_models, know
 # Main evaluation script
 # ---------------------------------------------------------
 def main():
-    # -----------------------------
-    # Config
-    # -----------------------------
+    
     DATA_PATH = "RML2016data.pkl"
     MODEL_PATH = "checkpoints_supcon/best_model.pth"
     WEIBULL_PATH = "checkpoints_openmax/weibull_params.npy"
