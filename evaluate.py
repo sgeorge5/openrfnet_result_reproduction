@@ -108,9 +108,9 @@ def evaluate_open_set(model, loader, device, class_centers, weibull_models, know
 def main():
     
     DATA_PATH = "RML2016data.pkl"
-    MODEL_PATH = "checkpoints_supcon/best_model.pth"
-    WEIBULL_PATH = "checkpoints_openmax/weibull_params.npy"
-    CENTERS_PATH = "checkpoints_openmax/class_centers.npy"
+    MODEL_PATH = "best_model.pth"
+    WEIBULL_PATH = "weibull_params.npy"
+    CENTERS_PATH = "class_centers.npy"
     BATCH_SIZE = 32
     KNOWN_RATIO = 0.7
 
