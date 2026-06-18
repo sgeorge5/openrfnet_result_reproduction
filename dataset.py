@@ -1,17 +1,16 @@
 import pickle
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import random
 
 
 class RFSignalDataset(Dataset):
     """
-    Loads I/Q samples from a .pkl dictionary and returns:
+    Loads I/Q samples from a dict and returns:
         - raw I/Q tensor (2, T)
-        - label index
-        - class name
-    STFT conversion happens later in preprocess.py
+        - label index (known classes only)
+        - class name (string)
     """
 
     def __init__(self, data_dict, class_to_idx, transform=None):
@@ -21,43 +20,41 @@ class RFSignalDataset(Dataset):
 
         self.samples = []
         for class_name, arr in data_dict.items():
-            label = class_to_idx[class_name]
             for i in range(arr.shape[0]):
-                self.samples.append((arr[i], label, class_name))
+                # Store only IQ and class_name — label assigned later
+                self.samples.append((arr[i], class_name))
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        iq, label, class_name = self.samples[idx]
+        iq, class_name = self.samples[idx]
 
-        # Convert to tensor
         iq = torch.tensor(iq, dtype=torch.float32)
 
-        # Optional transform (e.g., STFT)
+        # Assign label only for known classes
+        if class_name in self.class_to_idx:
+            label = self.class_to_idx[class_name]
+        else:
+            label = -1  # unknown class
+
         if self.transform:
             iq = self.transform(iq)
 
         return iq, label, class_name
 
 
+# ---------------------------------------------------------
+# Load processed dataset
+# ---------------------------------------------------------
 def load_pkl_dataset(path):
-    """
-    Loads the .pkl file and returns a Python dictionary:
-        { 'QPSK': np.array([...]), 'QAM16': np.array([...]), ... }
-    """
-    with open(path, "rb") as f:
-        data = pickle.load(f)
-    return data
+    return torch.load(path, weights_only=False)
 
 
+# ---------------------------------------------------------
+# Split classes into known/unknown
+# ---------------------------------------------------------
 def split_known_unknown_classes(all_classes, known_ratio=0.7, seed=42):
-    """
-    Randomly splits classes into known and unknown sets.
-    Example:
-        known_classes = ['QPSK', 'QAM16', ...]
-        unknown_classes = ['GFSK', 'AM', ...]
-    """
     random.seed(seed)
     classes = list(all_classes)
     random.shuffle(classes)
@@ -69,20 +66,17 @@ def split_known_unknown_classes(all_classes, known_ratio=0.7, seed=42):
     return known, unknown
 
 
+# ---------------------------------------------------------
+# Build train/test datasets
+# ---------------------------------------------------------
 def build_datasets(data_dict, known_classes, unknown_classes):
-    """
-    Builds PyTorch datasets for:
-        - closed-set training (known classes only)
-        - open-set testing (known + unknown)
-    """
-
-    # Map class names to integer labels
+    # Only known classes get labels
     class_to_idx = {cls: i for i, cls in enumerate(known_classes)}
 
-    # Closed-set training data
+    # Closed-set training uses only known classes
     train_dict = {cls: data_dict[cls] for cls in known_classes}
 
-    # Open-set test data (known + unknown)
+    # Open-set testing uses known + unknown
     test_dict = {cls: data_dict[cls] for cls in known_classes + unknown_classes}
 
     train_dataset = RFSignalDataset(train_dict, class_to_idx)

@@ -6,7 +6,7 @@ from tqdm import tqdm
 import os
 
 from dataset import load_pkl_dataset, split_known_unknown_classes, build_datasets
-from preprocess import STFTTransform
+from stft_transform import STFTTransform
 from model import OpenRFNet
 from losses import CombinedLoss
 
@@ -56,7 +56,7 @@ def main():
     # -----------------------------
     # Config
     # -----------------------------
-    DATA_PATH = "data/your_dataset.pkl"
+    DATA_PATH = "processed_raw_dataset.pt"
     BATCH_SIZE = 32
     EPOCHS = 20
     LR = 1e-3

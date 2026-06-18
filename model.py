@@ -10,16 +10,22 @@ class ResNetBranch(nn.Module):
 
     def __init__(self, pretrained=False, out_dim=512):
         super().__init__()
+
         resnet = models.resnet18(weights=None if not pretrained else "IMAGENET1K_V1")
+
+        # Modify first conv layer to accept 1-channel input
+        resnet.conv1 = nn.Conv2d(
+            1, 64, kernel_size=7, stride=2, padding=3, bias=False
+        )
 
         # Remove final classification layer
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
         self.out_dim = out_dim
 
     def forward(self, x):
-        # x: (B, 1, H, W)
         feat = self.feature_extractor(x)  # (B, 512, 1, 1)
-        return feat.view(feat.size(0), -1)  # (B, 512)
+        return feat.view(feat.size(0), -1)
+
 
 
 class TransformerBranch(nn.Module):

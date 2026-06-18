@@ -1,61 +1,36 @@
+import pickle
 import torch
 import numpy as np
-from scipy.signal import stft
-import torch.nn.functional as F
+from collections import defaultdict
+
+MAX_SAMPLES_PER_CLASS = 500
 
 
-class STFTTransform:
-    """
-    Converts raw I/Q samples (2, T) into a normalized STFT spectrogram (1, H, W).
-    This matches the preprocessing described in Paper 17.
-    """
+def main():
+    print("=== Preprocessing Started ===")
 
-    def __init__(self, nperseg=64, noverlap=32, nfft=128, target_size=(224, 224)):
-        self.nperseg = nperseg
-        self.noverlap = noverlap
-        self.nfft = nfft
-        self.target_size = target_size
+    with open("RML2016data.pkl", "rb") as f:
+        raw_data = pickle.load(f, encoding="latin1")
 
-    def __call__(self, iq_tensor):
-        """
-        iq_tensor: shape (2, T)
-        returns: spectrogram tensor (1, H, W)
-        """
+    # Merge all SNRs into a single class
+    merged = defaultdict(list)
 
-        # Convert I/Q → complex signal
-        i = iq_tensor[0].numpy()
-        q = iq_tensor[1].numpy()
-        complex_signal = i + 1j * q
+    for (mod, snr), samples in raw_data.items():
+        merged[mod].append(samples)
 
-        # Compute STFT
-        f, t, Zxx = stft(
-            complex_signal,
-            nperseg=self.nperseg,
-            noverlap=self.noverlap,
-            nfft=self.nfft
-        )
+    # Concatenate all SNR blocks per modulation
+    merged = {mod: torch.tensor(np.concatenate(blocks, axis=0)) 
+              for mod, blocks in merged.items()}
 
-        # Magnitude spectrogram
-        S = np.abs(Zxx)
+    # Reduce dataset size
+    reduced = {}
+    for mod, arr in merged.items():
+        reduced[mod] = arr[:MAX_SAMPLES_PER_CLASS]
 
-        # Convert to dB scale (Paper 17 uses 20*log10)
-        S_db = 20 * np.log10(S + 1e-8)
+    torch.save(reduced, "processed_raw_dataset.pt")
 
-        # Normalize to [0,1] (Paper 17 Eq. 4)
-        S_norm = (S_db - S_db.min()) / (S_db.max() - S_db.min() + 1e-8)
+    print("=== Preprocessing Complete ===")
+    print(f"Saved reduced dataset with {MAX_SAMPLES_PER_CLASS} samples per class.")
 
-        # Convert to torch tensor
-        S_tensor = torch.tensor(S_norm, dtype=torch.float32)
-
-        # Add channel dimension → (1, H, W)
-        S_tensor = S_tensor.unsqueeze(0)
-
-        # Resize to model input size
-        S_tensor = F.interpolate(
-            S_tensor.unsqueeze(0),
-            size=self.target_size,
-            mode="bilinear",
-            align_corners=False
-        ).squeeze(0)
-
-        return S_tensor
+if __name__ == "__main__":
+    main()
