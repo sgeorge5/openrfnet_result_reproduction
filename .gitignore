@@ -5,3 +5,5 @@ RML2016data.pkl
 __pycache__/
 *.pth
 checkpoints_supcon/
+*.pt
+processed_raw_dataset.pt
