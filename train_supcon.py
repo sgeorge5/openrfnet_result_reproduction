@@ -18,10 +18,8 @@ def train_epoch(model, loader, criterion, optimizer, device):
     for x, labels, _ in tqdm(loader, desc="Training", leave=False):
         x, labels = x.to(device), labels.to(device)
 
-        # Forward pass
         fused_feat, proj, logits = model(x, return_features=True)
 
-        # Compute combined loss
         loss, loss_supcon, loss_ce = criterion(fused_feat, logits, labels)
 
         optimizer.zero_grad()
@@ -53,9 +51,6 @@ def validate(model, loader, device):
 
 
 def main():
-    # -----------------------------
-    # Config
-    # -----------------------------
     DATA_PATH = "processed_raw_dataset.pt"
     BATCH_SIZE = 32
     EPOCHS = 20
@@ -67,9 +62,6 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # -----------------------------
-    # Load dataset
-    # -----------------------------
     data_dict = load_pkl_dataset(DATA_PATH)
     all_classes = list(data_dict.keys())
 
@@ -81,7 +73,7 @@ def main():
         data_dict, known_classes, unknown_classes
     )
 
-    # Apply STFT transform
+   
     transform = STFTTransform()
     train_dataset.transform = transform
     test_dataset.transform = transform
@@ -89,17 +81,13 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    # -----------------------------
-    # Build model
-    # -----------------------------
+   
     model = OpenRFNet(num_classes=len(known_classes)).to(device)
 
     criterion = CombinedLoss(temperature=0.07)
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
-    # -----------------------------
-    # Training loop
-    # -----------------------------
+    
     best_acc = 0
 
     for epoch in range(EPOCHS):
@@ -114,7 +102,7 @@ def main():
         print(f"Train Loss: {train_loss:.4f} | CE: {ce_loss:.4f} | SupCon: {supcon_loss:.4f}")
         print(f"Validation Accuracy: {val_acc:.4f}")
 
-        # Save best model
+   
         if val_acc > best_acc:
             best_acc = val_acc
             torch.save(model.state_dict(), os.path.join(SAVE_DIR, "best_model.pth"))

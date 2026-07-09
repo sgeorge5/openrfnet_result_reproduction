@@ -12,17 +12,14 @@ def main():
     with open("RML2016data.pkl", "rb") as f:
         raw_data = pickle.load(f, encoding="latin1")
 
-    # Merge all SNRs into a single class
     merged = defaultdict(list)
 
     for (mod, snr), samples in raw_data.items():
         merged[mod].append(samples)
 
-    # Concatenate all SNR blocks per modulation
     merged = {mod: torch.tensor(np.concatenate(blocks, axis=0)) 
               for mod, blocks in merged.items()}
 
-    # Reduce dataset size
     reduced = {}
     for mod, arr in merged.items():
         reduced[mod] = arr[:MAX_SAMPLES_PER_CLASS]

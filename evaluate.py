@@ -8,11 +8,9 @@ from tqdm import tqdm
 from dataset import load_pkl_dataset, split_known_unknown_classes, build_datasets
 from stft_transform import STFTTransform
 from model import OpenRFNet
-from openmax_utils import openmax_score   # NEW FILE
+from openmax_utils import openmax_score
 
-# ---------------------------------------------------------
-# Plot confusion matrix
-# ---------------------------------------------------------
+
 def plot_confusion_matrix(cm, class_names, title="Confusion Matrix"):
     plt.figure(figsize=(10, 8))
     plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
@@ -29,9 +27,7 @@ def plot_confusion_matrix(cm, class_names, title="Confusion Matrix"):
     plt.show()
 
 
-# ---------------------------------------------------------
-# Closed-set evaluation
-# ---------------------------------------------------------
+
 def evaluate_closed_set(model, loader, device, class_names):
     model.eval()
     all_preds, all_labels = [], []
@@ -48,14 +44,10 @@ def evaluate_closed_set(model, loader, device, class_names):
 
     accuracy = np.mean(np.array(all_preds) == np.array(all_labels))
     cm = confusion_matrix(all_labels, all_preds)
-    report = classification_report(all_labels, all_preds, target_names=class_names)
 
+    report = classification_report(all_labels, all_preds, target_names=class_names)
     return accuracy, cm, report
 
-
-# ---------------------------------------------------------
-# Open-set evaluation
-# ---------------------------------------------------------
 def evaluate_open_set(model, loader, device, class_centers, weibull_models, known_classes):
     model.eval()
 
@@ -95,20 +87,17 @@ def evaluate_open_set(model, loader, device, class_centers, weibull_models, know
     return known_acc, unknown_acc, open_set_acc
 
 
-# ---------------------------------------------------------
-# Main evaluation script
-# ---------------------------------------------------------
 def main():
 
     DATA_PATH = "processed_raw_dataset.pt"
     MODEL_PATH = "checkpoints_supcon/best_model.pth"
-    OPENMAX_PATH = "openmax_params.pt"   # NEW
+    OPENMAX_PATH = "openmax_params.pt"
     BATCH_SIZE = 32
     KNOWN_RATIO = 0.7
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Load dataset
+
     data_dict = load_pkl_dataset(DATA_PATH)
     all_classes = list(data_dict.keys())
 
@@ -125,28 +114,35 @@ def main():
 
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    # Load model
+    class_names = [
+        "BPSK",
+        "QPSK",
+        "8PSK",
+        "QAM16",
+        "QAM64",
+        "AM-DSB",
+        "AM-SSB",
+        "FM"
+    ]
+
     model = OpenRFNet(num_classes=len(known_classes)).to(device)
     model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     print("Loaded closed-set model.")
 
-    # Load OpenMax parameters
-    params = torch.load(OPENMAX_PATH)
+    params = torch.load(OPENMAX_PATH, weights_only=False)
     weibull_models = params["weibull"]
     class_centers = params["centers"]
     print("Loaded OpenMax parameters.")
 
-    # Closed-set evaluation
     print("\n===== CLOSED-SET EVALUATION =====")
     closed_acc, cm, report = evaluate_closed_set(
-        model, test_loader, device, known_classes
+        model, test_loader, device, class_names
     )
 
     print(f"Closed-set accuracy: {closed_acc:.4f}")
     print(report)
-    plot_confusion_matrix(cm, known_classes)
+    plot_confusion_matrix(cm, class_names)
 
-    # Open-set evaluation
     print("\n===== OPEN-SET EVALUATION =====")
     known_acc, unknown_acc, open_set_acc = evaluate_open_set(
         model, test_loader, device, class_centers, weibull_models, known_classes

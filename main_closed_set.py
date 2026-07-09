@@ -1,8 +1,3 @@
-"""
-Main script for running closed-set supervised contrastive training
-This script simply calls the training function defined in train_supcon.py.
-"""
-
 from train_supcon import main as train_closed_set
 
 

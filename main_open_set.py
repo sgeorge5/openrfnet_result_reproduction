@@ -1,9 +1,3 @@
-"""
-Main script for running Open-Set Recognition (OpenMax)
-This script simply calls the OpenMax training/evaluation function
-defined in train_openmax.py.
-"""
-
 from train_openmax import main as run_openmax
 
 

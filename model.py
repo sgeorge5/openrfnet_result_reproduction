@@ -4,21 +4,17 @@ import torchvision.models as models
 
 
 class ResNetBranch(nn.Module):
-    """
-    Extracts texture features from spectrograms using ResNet-18
-    """
+   
 
     def __init__(self, pretrained=False, out_dim=512):
         super().__init__()
 
         resnet = models.resnet18(weights=None if not pretrained else "IMAGENET1K_V1")
 
-        # Modify first conv layer to accept 1-channel input
         resnet.conv1 = nn.Conv2d(
             1, 64, kernel_size=7, stride=2, padding=3, bias=False
         )
 
-        # Remove final classification layer
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
         self.out_dim = out_dim
 
@@ -29,16 +25,11 @@ class ResNetBranch(nn.Module):
 
 
 class TransformerBranch(nn.Module):
-    """
-    Extracts time-frequency positional features using TransformerEncoder.
-    """
 
     def __init__(self, embed_dim=256, num_layers=4, num_heads=8):
         super().__init__()
 
         self.embed_dim = embed_dim
-
-        # Linear projection to embedding dimension
         self.proj = nn.Linear(224, embed_dim)
 
         encoder_layer = nn.TransformerEncoderLayer(
@@ -48,30 +39,22 @@ class TransformerBranch(nn.Module):
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
-        # Pooling to get a single feature vector
         self.pool = nn.AdaptiveAvgPool1d(1)
 
     def forward(self, x):
-        # x: (B, 1, H, W) → flatten frequency dimension
-        x = x.squeeze(1)  # (B, H, W)
 
-        # Project each row into embedding space
-        x = self.proj(x)  # (B, H, embed_dim)
+        x = x.squeeze(1)  
+        x = self.proj(x)  
 
-        # Transformer expects (B, seq_len, embed_dim)
-        x = self.transformer(x)  # (B, H, embed_dim)
+        x = self.transformer(x)  
 
-        # Pool across sequence length
-        x = x.permute(0, 2, 1)  # (B, embed_dim, H)
-        x = self.pool(x).squeeze(-1)  # (B, embed_dim)
+        x = x.permute(0, 2, 1)
+        x = self.pool(x).squeeze(-1)  
 
         return x
 
 
 class FusionHead(nn.Module):
-    """
-    Fuses ResNet and Transformer features.
-    """
 
     def __init__(self, res_dim=512, trans_dim=256, fused_dim=256):
         super().__init__()
@@ -88,9 +71,6 @@ class FusionHead(nn.Module):
 
 
 class ProjectionHead(nn.Module):
-    """
-    Projection head for supervised contrastive learning.
-    """
 
     def __init__(self, in_dim=256, proj_dim=128):
         super().__init__()
@@ -105,9 +85,7 @@ class ProjectionHead(nn.Module):
 
 
 class ClassifierHead(nn.Module):
-    """
-    Classification head for closed-set training.
-    """
+   
 
     def __init__(self, in_dim=256, num_classes=10):
         super().__init__()
@@ -118,14 +96,7 @@ class ClassifierHead(nn.Module):
 
 
 class OpenRFNet(nn.Module):
-    """
-    Full model combining:
-        - ResNet branch
-        - Transformer branch
-        - Fusion module
-        - Projection head (SupCon)
-        - Classifier head (closed-set)
-    """
+  
 
     def __init__(self, num_classes):
         super().__init__()

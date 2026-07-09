@@ -1,4 +1,3 @@
-# openmax_utils.py
 import numpy as np
 from scipy.stats import weibull_min
 from tqdm import tqdm
