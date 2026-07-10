@@ -61,7 +61,7 @@ The reproduced architecture follows Paper 17:
 
 ---
 
-## 🛠 Training
+## Training
 
 - Epochs: 20
 - Batch size: 32
