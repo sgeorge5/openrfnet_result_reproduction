@@ -51,7 +51,7 @@ This is significantly smaller than the dataset used in the original paper, which
 
 ## Model Architecture
 
-The reproduced architecture follows Paper 17:
+The reproduced architecture follows the Paper:
 
 - **Branch 1:** ResNet‑style CNN for time‑frequency features
 - **Branch 2:** Transformer encoder for temporal structure
@@ -144,7 +144,7 @@ The pipeline is functioning correctly — the behavior reflects dataset limitati
 - Closed‑set evaluation
 - Open‑set evaluation
 
-This matches the **methodology** of Paper 17.
+This matches the **methodology** of the Paper.
 
 ---
 
