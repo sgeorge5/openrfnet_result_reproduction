@@ -121,7 +121,7 @@ Open-set accuracy:      0.3636
 
 The pipeline is functioning correctly — the behavior reflects dataset limitations, not implementation errors.
 
-| Aspect                    | Paper             | Your Results            | Assessment                      |
+| Aspect                    | Paper             | My Results              | Assessment                      |
 | ------------------------- | ----------------- | ----------------------- | ------------------------------- |
 | **Closed-set classifier** | Implemented       | Implemented             | Successfully reproduced         |
 | **OpenMax stage**         | Implemented       | Implemented             | Successfully reproduced         |
