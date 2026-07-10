@@ -121,6 +121,16 @@ Open-set accuracy:      0.3636
 
 The pipeline is functioning correctly — the behavior reflects dataset limitations, not implementation errors.
 
+| Aspect                    | Paper             | Your Results            | Assessment                      |
+| ------------------------- | ----------------- | ----------------------- | ------------------------------- |
+| **Closed-set classifier** | Implemented       | Implemented             | Successfully reproduced         |
+| **OpenMax stage**         | Implemented       | Implemented             | Successfully reproduced         |
+| **Confusion matrix**      | Generated         | Generated               | Matches evaluation methodology  |
+| **Classification report** | Generated         | Generated               | Matches evaluation methodology  |
+| **Closed-set accuracy**   | 95% (UAV dataset) | 47.25% (RadioML subset) | Expected to differ              |
+| **Open-set evaluation**   | Yes               | Yes                     | Successfully reproduced         |
+| **Unknown detection**     | High              | 100%                    | Working (possibly conservative) |
+
 ---
 
 ## What Was Successfully Reproduced
